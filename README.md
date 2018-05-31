@@ -2,12 +2,6 @@
 expect this is a simple&amp;useful rpc lib for c programmers in linux   
    
 current for a function like void *f(void *arg)   
-## server
-  - server_init()   
-  - reg(f): add func name f   
-## pkt  
-  - pkt-type | pkt-len | tlv ...   
-  - pkt-type: func_req, func_ret   
 ## lib 
   - server_init(saddr)	generate daemon, with spec addr or default address   
   - client_init(saddr) 	generate connection, with spec addr or default address   
@@ -20,12 +14,19 @@ current for a function like void *f(void *arg)
 	  - call callback to process the result   
   - server_run()	wait for client req and send reply   
   - client_run()	wait for server reply for async call   
-  - pkt processor   
+  - pkt processor 
+## pkt  
+  - pkt-type | pkt-len | tlv ...   
+  - pkt-type: func_req, func_ret   
+
+## server
+  - server_init(saddr)   
+  - reg(f): add func name f     
 ## client   
-  - void result_handler(void *result)   
+  - client_init(saddr)   
   - result = sync_call(f(arg))	-> sync_func(f, arg, sizeof(arg))   
   - async_call(f(arg), result_handler)	-> async_func(f, arg, sizeof(arg), result_handler)   
-
+    - void result_handler(void *result)   
 ## future
    - add support for complex function type
    - add support for multiple/complex server/client   
