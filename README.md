@@ -21,8 +21,11 @@ current for a function like void *f(void *arg)
   - server_run()	wait for client req and send reply   
   - client_run()	wait for server reply for async call   
   - pkt processor   
-  - add support for multiple/complex server/client   
-## client:   
+## client   
   - void result_handler(void *result)   
   - result = sync_call(f(arg))	-> sync_func(f, arg, sizeof(arg))   
   - async_call(f(arg), result_handler)	-> async_func(f, arg, sizeof(arg), result_handler)   
+
+## future
+   - add support for complex function type
+   - add support for multiple/complex server/client   
