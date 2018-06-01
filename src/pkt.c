@@ -48,6 +48,7 @@ int pkt2msg(char *buf, int buflen, pktmsg_t *msg)
         return 0;
     }
     msg->type = hdr->type;
+    msg->id = hdr->id;
     for(tlv = (void *)(hdr->data); lenleft > 0 && tlv->l <= lenleft; lenleft -= tlv->l, tlv = (tlv_t *)((char *)tlv + tlv->l)) {
         get_tlv(tlv, msg);
     }
@@ -58,6 +59,7 @@ int msg2pkt(pktmsg_t *msg, char *buf, int bufsize)
 {
     hdr_t *hdr = (void *)buf;
     hdr->type = msg->type;
+    hdr->id = msg->id;
     if(hdr->type <= PKT_TYPE_INIT || hdr->type >= PKT_TYPE_MAX) {
         return 0;
     }

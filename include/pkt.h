@@ -3,9 +3,10 @@
 #include <api.h>
 #include <sys/socket.h>
 
-typedef struct {
+typedef struct {    // host byte order? for domain socket only, extend when use tcpip
     char ver;       // current v1
     char type;
+    short id;       // pkt match
     short len;      // total len, from ver to data[end]
     char data[0];   // tlv follows
 } __attribute__((packed)) hdr_t;
@@ -17,9 +18,9 @@ typedef enum {
     PKT_TYPE_MAX
 } pkt_type_t;
 
-typedef struct {
+typedef struct {    // host byte order? for domain socket only, extend when use tcpip
     char t;
-    short l;    // host byte order? for domain socket only, extend when use tcpip
+    short l;
     char v[0];
 } __attribute__((packed)) tlv_t;
 
@@ -32,6 +33,7 @@ typedef enum {
 
 typedef struct {
     int type;
+    int id;
     char name[MAX_NAME_LEN];
     char val[MAX_ARG_LEN];
     int vallen;
