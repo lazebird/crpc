@@ -3,6 +3,7 @@
 #include <list.h>
 
 #define MAX_NAME_LEN 64
+#define MAX_ARG_LEN 1024
 
 typedef void *(*func_t)(void *);
 typedef void (*callback_t)(void *);
@@ -14,5 +15,7 @@ typedef struct {
     int argsize;
     int retsize;
 } api_t;
+
+void *api_exec_by_name(char *name, void *arg, int *retsize);
 
 #endif

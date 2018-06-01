@@ -1,9 +1,12 @@
 #include <unistd.h>
 #include <stdlib.h>
+#include <errno.h>
 #include <srv.h>
 #include <list.h>
 #include <api.h>
 #include <sys/epoll.h>
+#include <pkt.h>
+#include <dbg.h>
 
 srv_t g_srv;
 int crpc_srv_init(char *path)
@@ -24,6 +27,7 @@ int crpc_srv_init(char *path)
         return -2;
     }
     INIT_LIST_HEAD(&g_srv.apilst);
+    LOG_DBG("fd %d", g_srv.fd);
     return g_srv.fd;
 }
 
@@ -41,31 +45,40 @@ int crpc_srv_run(int count)
     int epfd =  epoll_create(MAX_EP_SIZE);
     struct epoll_event evs[MAX_EP_SIZE];
     int i, num, ret;
-    evs[0].events = EPOLLIN;
+    struct sockaddr_un src_addr;
+    socklen_t addrlen = sizeof(src_addr);
+    pktmsg_t msg;
+    if (epfd < 0) {
+        return 0;
+    }
+    evs[0].events = EPOLLIN | EPOLLET;
     evs[0].data.fd = g_srv.fd;
     epoll_ctl(epfd, EPOLL_CTL_ADD, g_srv.fd, &evs[0]);
-    while (1) {
+    while(1) {
+        memset(&msg, 0, sizeof(msg));
+        memset(&evs, 0, sizeof(evs));
         num = epoll_wait(epfd,evs,MAX_EP_SIZE,-1);
-        for (i = 0; i < num; i++) {
-            ret = read(evs[i].data.fd, g_srv.iobuf, sizeof(g_srv.iobuf));
-            if (ret <=0) {
+        if (num <= 0) {
+            sleep(1);
+            continue;
+        }
+        for(i = 0; i < num; i++) {
+            ret = recvfrom(evs[i].data.fd, g_srv.iobuf, sizeof(g_srv.iobuf), 0, (struct sockaddr *)&src_addr, &addrlen);
+            LOG_DBG("recv %d bytes from fd %d", ret, evs[i].data.fd);
+            if(ret <=0) {
+                LOG_ERR("recv error, ret %d, errno %d, errstr %s", ret, errno, strerror(errno));
                 continue;
             }
             // pkt decode, call api, pkt encode, reply
+            pkt_proc(g_srv.iobuf, ret, &msg);
+            LOG_DBG("recv req api: %s", msg.name);
+            pkt_send(&msg, evs[i].data.fd, g_srv.iobuf, sizeof(g_srv.iobuf), (struct sockaddr *)&src_addr, addrlen);
         }
-        if (count != -1 && --count <= 0) {
+        if(!--count) {
             break;
         }
     }
+    close(epfd);
+    LOG_INFO("#### Count arrives, server exits ####");
     return 1;
-}
-
-int srv_add_api(api_t *api)
-{
-    api_t *new = malloc(sizeof(*new));
-    if(new) {
-        memcpy(new, api, sizeof(*new));
-        list_add(&api->lst, &g_srv.apilst);
-    }
-    return !!new;
 }

@@ -3,6 +3,8 @@ expect this is a simple&amp;useful rpc lib for c programmers in linux
 stop and just write your code down if you are interesting. Anyone is welcome here!  
    
 current for a function like msg1_t *f(msg2_t *arg)   
+please refer to /include/crpc.h, something below is not accurate, and willnot be updated any more  
+
 ## lib 
   - server_init(saddr)	generate daemon, with spec addr or default address   
   - client_init(saddr) 	generate connection, with spec addr or default address   

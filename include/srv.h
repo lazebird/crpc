@@ -16,4 +16,6 @@ typedef struct {
     char iobuf[MAX_BUF_LEN];
 } srv_t;
 
+extern srv_t g_srv;
+
 #endif
