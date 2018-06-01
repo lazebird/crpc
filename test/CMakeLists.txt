@@ -1,0 +1,6 @@
+aux_source_directory(${PROJECT_SOURCE_DIR}/test SRC)
+add_executable(hellod "hello_server.c") 
+add_executable(helloc "hello_client.c") 
+link_directories(${LIBRARY_OUTPUT_PATH}) 
+target_link_libraries(hellod crpc) 
+target_link_libraries(helloc crpc) 
