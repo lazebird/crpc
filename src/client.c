@@ -1,4 +1,5 @@
 #include <client.h>
+#include <unistd.h>
 
 client_t g_client;
 int crpc_client_init(char *path)
@@ -13,4 +14,13 @@ int crpc_client_init(char *path)
         return -1;
     }
     return g_client.fd;
+}
+
+int crpc_client_destroy(void)
+{
+    if (g_client.fd > 0) {
+        close(g_client.fd);
+         g_client.fd = -1;
+   }
+   return g_client.fd;
 }

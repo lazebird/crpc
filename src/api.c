@@ -7,10 +7,10 @@ int crpc_api_reg(char *name, func_t func, int retsize)
     return 1;
 }
 
-int crpc_sync_call(char *name, void *arg, int argsize)
+void *crpc_sync_call(char *name, void *arg, int argsize)
 {
     LOG_DBG("name %s arg %p arg size %d", name, arg, argsize);
-    return 1;
+    return NULL;
 }
 
 int crpc_async_call(char *name, void *arg, int argsize, callback_t func)

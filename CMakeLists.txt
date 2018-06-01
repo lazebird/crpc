@@ -6,4 +6,5 @@ set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/build/)
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/build/)
 add_compile_options(-g -Wall -o3)
 add_subdirectory(src)
+add_subdirectory(test)
 
