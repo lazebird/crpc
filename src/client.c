@@ -68,7 +68,7 @@ static void *crpc_client_run(int sec)
     if(epfd < 0) {
         return NULL;
     }
-    evt.events = EPOLLIN | EPOLLET;
+    evt.events = EPOLLIN;// | EPOLLET;
     evt.data.fd = g_client.fd;
     epoll_ctl(epfd, EPOLL_CTL_ADD, g_client.fd, &evt);
     if(epoll_wait(epfd,&evt,1,sec) > 0) {

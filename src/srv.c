@@ -68,7 +68,7 @@ int crpc_srv_run(int count)
     if(epfd < 0) {
         return 0;
     }
-    evt.events = EPOLLIN | EPOLLET;
+    evt.events = EPOLLIN;// | EPOLLET;
     evt.data.fd = g_srv.fd;
     epoll_ctl(epfd, EPOLL_CTL_ADD, g_srv.fd, &evt);
     while(count < 0 || --count > 0) {
