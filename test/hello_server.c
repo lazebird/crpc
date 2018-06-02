@@ -6,6 +6,7 @@
 msg_reply_t *hello(msg_req_t *msg)
 {
     static msg_reply_t res;
+    printf("req [%d] %s\n", msg->id, msg->info);
     memset(&res, 0, sizeof(res));
     res.id = msg->id;
     snprintf(res.info, sizeof(res.info), "%s %s", "hello", msg->info);

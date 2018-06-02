@@ -39,8 +39,6 @@ typedef struct {
     int vallen;
 } pktmsg_t;
 
-int pkt2msg(char *buf, int buflen, pktmsg_t *msg);
-int msg2pkt(pktmsg_t *msg, char *buf, int bufsize);
 int pkt_proc(char *buf, int bufsize, pktmsg_t *msg);
 int pkt_send(pktmsg_t *msg, int fd, char *buf, int bufsize, struct sockaddr *dest_addr, socklen_t addrlen);
 

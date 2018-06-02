@@ -39,7 +39,7 @@ static int add_tlv(char *buf, int bufsize, int type, char *val, int vallen)
     return len;
 }
 
-int pkt2msg(char *buf, int buflen, pktmsg_t *msg)
+static int pkt2msg(char *buf, int buflen, pktmsg_t *msg)
 {
     hdr_t *hdr = (void *)buf;
     tlv_t *tlv;
@@ -55,7 +55,7 @@ int pkt2msg(char *buf, int buflen, pktmsg_t *msg)
     return 1;
 }
 
-int msg2pkt(pktmsg_t *msg, char *buf, int bufsize)
+static int msg2pkt(pktmsg_t *msg, char *buf, int bufsize)
 {
     hdr_t *hdr = (void *)buf;
     hdr->type = msg->type;
@@ -100,10 +100,10 @@ int pkt_send(pktmsg_t *msg, int fd, char *buf, int bufsize, struct sockaddr *des
     } else {
         ret = send(fd, buf, len, 0);
     }
-    LOG_DBG("send fd %d pkt type %d len %d ret %d, errno %d errstr %s", fd, msg->type, len, ret, errno, strerror(errno));
-    if (ret < 0) {
-        struct sockaddr_un *un = (struct sockaddr_un *)dest_addr;
-        LOG_DBG("addr family %d, path %s, len %d", un->sun_family, un->sun_path, addrlen);
+    if(ret != len) {
+        LOG_ERR("send fd %d pkt type %d len %d ret %d, errno %d errstr %s", fd, msg->type, len, ret, errno, strerror(errno));
+    } else {
+        LOG_DBG("send fd %d pkt type %d len %d", fd, msg->type, len);
     }
     return ret;
 }

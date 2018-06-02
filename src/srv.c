@@ -40,50 +40,6 @@ int crpc_srv_destroy(void)
     return g_srv.fd;
 }
 
-int crpc_srv_run(int count)
-{
-    int epfd =  epoll_create(MAX_EP_SIZE);
-    struct epoll_event evs[MAX_EP_SIZE];
-    int i, num, ret;
-    struct sockaddr_un src_addr;
-    socklen_t addrlen = sizeof(src_addr);
-    pktmsg_t msg;
-    if (epfd < 0) {
-        return 0;
-    }
-    evs[0].events = EPOLLIN | EPOLLET;
-    evs[0].data.fd = g_srv.fd;
-    epoll_ctl(epfd, EPOLL_CTL_ADD, g_srv.fd, &evs[0]);
-    while(1) {
-        memset(&msg, 0, sizeof(msg));
-        memset(&evs, 0, sizeof(evs));
-        num = epoll_wait(epfd,evs,MAX_EP_SIZE,-1);
-        if (num <= 0) {
-            LOG_ERR("epoll_wait error, ret %d, errno %d, errstr %s", num, errno, strerror(errno));
-            sleep(1);
-            continue;
-        }
-        for(i = 0; i < num; i++) {
-            ret = recvfrom(evs[i].data.fd, g_srv.iobuf, sizeof(g_srv.iobuf), 0, (struct sockaddr *)&src_addr, &addrlen);
-            LOG_DBG("recv %d bytes from fd %d", ret, evs[i].data.fd);
-            if(ret <=0) {
-                LOG_ERR("recv error, ret %d, errno %d, errstr %s", ret, errno, strerror(errno));
-                continue;
-            }
-            // pkt decode, call api, pkt encode, reply
-            pkt_proc(g_srv.iobuf, ret, &msg);
-            LOG_DBG("recv req api: %s", msg.name);
-            pkt_send(&msg, evs[i].data.fd, g_srv.iobuf, sizeof(g_srv.iobuf), (struct sockaddr *)&src_addr, addrlen);
-        }
-        if(!--count) {
-            break;
-        }
-    }
-    close(epfd);
-    LOG_INFO("#### Count arrives, server exits ####");
-    return 1;
-}
-
 int crpc_srv_proc(int fd)
 {
     pktmsg_t msg;
@@ -104,3 +60,26 @@ int crpc_srv_proc(int fd)
     return ret;
 }
 
+int crpc_srv_run(int count)
+{
+    int epfd =  epoll_create(1);
+    struct epoll_event evt;
+    int ret;
+    if(epfd < 0) {
+        return 0;
+    }
+    evt.events = EPOLLIN | EPOLLET;
+    evt.data.fd = g_srv.fd;
+    epoll_ctl(epfd, EPOLL_CTL_ADD, g_srv.fd, &evt);
+    while(count < 0 || --count > 0) {
+        if((ret = epoll_wait(epfd,&evt,1,-1)) > 0) {
+            crpc_srv_proc(evt.data.fd);
+        } else {
+            LOG_ERR("epoll_wait error, ret %d, errno %d, errstr %s", ret, errno, strerror(errno));
+            sleep(1);
+        }
+    }
+    close(epfd);
+    LOG_INFO("#### Count arrives, server exits ####");
+    return 1;
+}

@@ -38,58 +38,9 @@ int crpc_client_destroy(void)
     return g_client.fd;
 }
 
-static void *crpc_client_wait(pktmsg_t *msg, int sec)
-{
-    int epfd =  epoll_create(MAX_EP_SIZE);
-    struct epoll_event evs[MAX_EP_SIZE];
-    int i, num, ret;
-    if (epfd < 0) {
-        return 0;
-    }
-    evs[0].events = EPOLLIN | EPOLLET;
-    evs[0].data.fd = g_client.fd;
-    epoll_ctl(epfd, EPOLL_CTL_ADD, g_client.fd, &evs[0]);
-    memset(evs, 0, sizeof(evs));
-    num = epoll_wait(epfd,evs,MAX_EP_SIZE,sec);
-    LOG_DBG("get %d events", num);
-    for(i = 0; i < num; i++) {
-        ret = recv(evs[i].data.fd, g_client.iobuf, sizeof(g_client.iobuf), 0);
-        LOG_DBG("recv %d bytes from fd %d", ret, evs[i].data.fd);
-        if(ret <=0) {
-            continue;
-        }
-        // pkt decode, call api, pkt encode, reply
-        pkt_proc(g_client.iobuf, ret, msg);
-        //break; // should only one msg here
-    }
-    close(epfd);
-    if(msg->type == PKT_TYPE_REP) {
-        return msg->val;
-    }
-    return NULL;
-}
-
-void *client_req_api(char *name, void *arg, int argsize, callback_t func)
+void *crpc_client_proc(int fd) // callback can be set by request and matched with pktid
 {
     static pktmsg_t msg;
-    memset(&msg, 0, sizeof(msg));
-    msg.type = PKT_TYPE_REQ;
-    snprintf(msg.name, sizeof(msg.name), "%s", name);
-    memcpy(msg.val, arg, argsize);
-    msg.vallen = argsize;
-    pkt_send(&msg, g_client.fd, g_client.iobuf, sizeof(g_client.iobuf), (struct sockaddr *)&g_client.saddr, (socklen_t)sizeof(g_client.saddr));
-    if(func) {
-        g_client.cb = func;
-        return NULL;
-    } else {
-        g_client.cb = NULL;
-    }
-    return crpc_client_wait(&msg, 3000);
-}
-
-int crpc_client_proc(int fd) // callback can be set by request and matched with pktid
-{
-    pktmsg_t msg;
     int ret;
     struct sockaddr_un src_addr;
     socklen_t addrlen = sizeof(src_addr);
@@ -104,8 +55,44 @@ int crpc_client_proc(int fd) // callback can be set by request and matched with 
     pkt_proc(g_client.iobuf, ret, &msg);
     if(msg.type == PKT_TYPE_REP && g_client.cb) {
         g_client.cb(msg.val);
-        return 1;
+        return NULL;
     }
-    return 0;
+    return msg.val;
+}
+
+static void *crpc_client_run(int sec)
+{
+    int epfd =  epoll_create(1);
+    struct epoll_event evt;
+    void *res = NULL;
+    if(epfd < 0) {
+        return NULL;
+    }
+    evt.events = EPOLLIN | EPOLLET;
+    evt.data.fd = g_client.fd;
+    epoll_ctl(epfd, EPOLL_CTL_ADD, g_client.fd, &evt);
+    if(epoll_wait(epfd,&evt,1,sec) > 0) {
+        res = crpc_client_proc(evt.data.fd);
+    }
+    close(epfd);
+    return res;
+}
+
+void *client_req_api(char *name, void *arg, int argsize, callback_t func)
+{
+    pktmsg_t msg;
+    memset(&msg, 0, sizeof(msg));
+    msg.type = PKT_TYPE_REQ;
+    snprintf(msg.name, sizeof(msg.name), "%s", name);
+    memcpy(msg.val, arg, argsize);
+    msg.vallen = argsize;
+    pkt_send(&msg, g_client.fd, g_client.iobuf, sizeof(g_client.iobuf), (struct sockaddr *)&g_client.saddr, (socklen_t)sizeof(g_client.saddr));
+    if(func) {
+        g_client.cb = func;
+        return NULL;
+    } else {
+        g_client.cb = NULL;
+    }
+    return crpc_client_run(3000);
 }
 
