@@ -8,3 +8,8 @@ add_compile_options(-g -Wall -o3)
 add_subdirectory(src)
 add_subdirectory(test)
 
+if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
+	set(CMAKE_INSTALL_PREFIX ${PROJECT_SOURCE_DIR}/dev/ CACHE PATH "..." FORCE)
+	message (STATUS "CMAKE_INSTALL_PREFIX = ${CMAKE_INSTALL_PREFIX}")
+endif()
+
