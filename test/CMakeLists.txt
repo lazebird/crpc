@@ -1,6 +1,11 @@
 aux_source_directory(${PROJECT_SOURCE_DIR}/test SRC)
 add_executable(hellod "hello_server.c") 
 add_executable(helloc "hello_client.c") 
+add_executable(hellod_async "hello_server_async.c") 
+add_executable(helloc_async "hello_client_async.c") 
 link_directories(${LIBRARY_OUTPUT_PATH}) 
 target_link_libraries(hellod crpc) 
 target_link_libraries(helloc crpc) 
+target_link_libraries(hellod_async crpc) 
+target_link_libraries(helloc_async crpc) 
+

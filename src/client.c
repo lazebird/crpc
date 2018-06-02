@@ -1,6 +1,7 @@
-#include <client.h>
 #include <unistd.h>
 #include <sys/epoll.h>
+#include <errno.h>
+#include <client.h>
 #include <pkt.h>
 #include <dbg.h>
 
@@ -78,7 +79,33 @@ void *client_req_api(char *name, void *arg, int argsize, callback_t func)
     msg.vallen = argsize;
     pkt_send(&msg, g_client.fd, g_client.iobuf, sizeof(g_client.iobuf), (struct sockaddr *)&g_client.saddr, (socklen_t)sizeof(g_client.saddr));
     if(func) {
+        g_client.cb = func;
         return NULL;
+    } else {
+        g_client.cb = NULL;
     }
     return crpc_client_wait(&msg, 3000);
 }
+
+int crpc_client_proc(int fd) // callback can be set by request and matched with pktid
+{
+    pktmsg_t msg;
+    int ret;
+    struct sockaddr_un src_addr;
+    socklen_t addrlen = sizeof(src_addr);
+    memset(&msg, 0, sizeof(msg));
+    ret = recvfrom(fd, g_client.iobuf, sizeof(g_client.iobuf), 0, (struct sockaddr *)&src_addr, &addrlen);
+    LOG_DBG("recv %d bytes from fd %d", ret, fd);
+    if(ret <=0) {
+        LOG_ERR("recv error, ret %d, errno %d, errstr %s", ret, errno, strerror(errno));
+        return 0;
+    }
+    // pkt decode, call api, pkt encode, reply
+    pkt_proc(g_client.iobuf, ret, &msg);
+    if(msg.type == PKT_TYPE_REP && g_client.cb) {
+        g_client.cb(msg.val);
+        return 1;
+    }
+    return 0;
+}
+

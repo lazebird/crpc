@@ -1,10 +1,10 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include <errno.h>
+#include <sys/epoll.h>
 #include <srv.h>
 #include <list.h>
 #include <api.h>
-#include <sys/epoll.h>
 #include <pkt.h>
 #include <dbg.h>
 
@@ -59,6 +59,7 @@ int crpc_srv_run(int count)
         memset(&evs, 0, sizeof(evs));
         num = epoll_wait(epfd,evs,MAX_EP_SIZE,-1);
         if (num <= 0) {
+            LOG_ERR("epoll_wait error, ret %d, errno %d, errstr %s", num, errno, strerror(errno));
             sleep(1);
             continue;
         }
@@ -82,3 +83,24 @@ int crpc_srv_run(int count)
     LOG_INFO("#### Count arrives, server exits ####");
     return 1;
 }
+
+int crpc_srv_proc(int fd)
+{
+    pktmsg_t msg;
+    int ret;
+    struct sockaddr_un src_addr;
+    socklen_t addrlen = sizeof(src_addr);
+    memset(&msg, 0, sizeof(msg));
+    ret = recvfrom(fd, g_srv.iobuf, sizeof(g_srv.iobuf), 0, (struct sockaddr *)&src_addr, &addrlen);
+    LOG_DBG("recv %d bytes from fd %d", ret, fd);
+    if(ret <=0) {
+        LOG_ERR("recv error, ret %d, errno %d, errstr %s", ret, errno, strerror(errno));
+        return ret;
+    }
+    // pkt decode, call api, pkt encode, reply
+    pkt_proc(g_srv.iobuf, ret, &msg);
+    LOG_DBG("recv req api: %s", msg.name);
+    ret = pkt_send(&msg, fd, g_srv.iobuf, sizeof(g_srv.iobuf), (struct sockaddr *)&src_addr, addrlen);
+    return ret;
+}
+
