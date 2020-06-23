@@ -1,13 +1,13 @@
 #include <stdlib.h>
-#include <api.h>
-#include <dbg.h>
-#include <srv.h>
-#include <client.h>
+#include "api.h"
+#include "dbg.h"
+#include "srv.h"
+#include "client.h"
 
 static int add_api(api_t *api)
 {
     api_t *newapi = malloc(sizeof(*newapi));
-    if(newapi) {
+    if (newapi) {
         memcpy(newapi, api, sizeof(*newapi));
         list_add(&newapi->lst, &g_srv.apilst);
     }
@@ -17,7 +17,8 @@ static int add_api(api_t *api)
 static api_t *find_api(char *name)
 {
     api_t *p;
-    list_for_each_entry(p, &g_srv.apilst, lst) {
+    list_for_each_entry(p, &g_srv.apilst, lst)
+    {
         if (!strcmp(name, p->name)) {
             return p;
         }

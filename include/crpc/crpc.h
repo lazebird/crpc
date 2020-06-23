@@ -11,15 +11,11 @@ int crpc_srv_destroy(void);
 int crpc_client_init(char *cpath, char *spath);
 int crpc_client_destroy(void);
 
-// this will hungup for new pkt, proc it if a pkt arrives, then hungup again; if "count" pkts arrived, it will return; nagative "count" means indefinitely
-int crpc_srv_run(int count);
+int crpc_srv_run(int fd, int msec); // this will hungup for new pkt, proc and return if a pkt arrives
+int crpc_srv_proc(int fd);          // this will read a pkt and proc it; use this api if you want to wait a pkt yourself
 
-// this will read a pkt and proc it, after a pkt detected, call this with its fd
-int crpc_srv_proc(int fd);
-
-// this will read a pkt and proc it, after a pkt detected, call this with its fd;
-// for a async call, it will return NULL; for a sync call, it will return result pointer.
-void *crpc_client_proc(int fd);
+void *crpc_client_run(int fd, int msec); // this will hungup for new pkt, proc and return if a pkt arrives
+void *crpc_client_proc(int fd);          // this will read a pkt and proc it; use this api if you want to wait a pkt yourself
 
 #define CRPC_API_REG(f) crpc_api_reg(#f, (func_t)f, sizeof(typeof(*f(NULL))))
 int crpc_api_reg(char *name, func_t func, int retsize);
