@@ -2,8 +2,8 @@
 #define API_H
 #include <list.h>
 
-#define MAX_NAME_LEN 64
-#define MAX_ARG_LEN 1024
+#define MAX_NAME_LEN 80
+#define MAX_ARG_LEN 2048
 
 typedef void *(*func_t)(void *);
 typedef void (*callback_t)(void *);
